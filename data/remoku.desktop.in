@@ -8,4 +8,5 @@ Icon=remoku
 Terminal=false
 Categories=AudioVideo;
 Keywords=remoku;rokuremote;roku;remote;remote control;tv;
+StartupWMClass=remoku
 StartupNotify=true

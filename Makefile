@@ -26,11 +26,14 @@ key:
 # Install the `remoku` command (plus a `rokuremote` alias) and a desktop entry.
 install:
 	install -d "$(BINDIR)" "$(APPDIR)" "$(ICONDIR)"
+	install -d "$(PREFIX)/share/icons/hicolor/256x256/apps"
 	ln -sfn "$(REPO)/bin/remoku" "$(BINDIR)/remoku"
 	ln -sfn "$(REPO)/bin/remoku" "$(BINDIR)/rokuremote"
 	sed "s|@EXEC@|$(REPO)/bin/remoku|" data/remoku.desktop.in \
 		> "$(APPDIR)/remoku.desktop"
 	install -m644 remoku/assets/remoku.svg "$(ICONDIR)/remoku.svg"
+	install -m644 remoku/assets/remoku-256.png "$(PREFIX)/share/icons/hicolor/256x256/apps/remoku.png"
+	-gtk-update-icon-cache -f -t "$(PREFIX)/share/icons/hicolor" 2>/dev/null || true
 	-update-desktop-database "$(APPDIR)" 2>/dev/null || true
 	@echo "Installed: type 'remoku' (or 'rokuremote'), or search 'remoku' in your apps."
 
@@ -38,6 +41,8 @@ uninstall:
 	rm -f "$(BINDIR)/remoku" "$(BINDIR)/rokuremote"
 	rm -f "$(APPDIR)/remoku.desktop" "$(APPDIR)/roku-remote.desktop"
 	rm -f "$(ICONDIR)/remoku.svg" "$(ICONDIR)/roku-remote.svg"
+	rm -f "$(PREFIX)/share/icons/hicolor/256x256/apps/remoku.png"
+	-gtk-update-icon-cache -f -t "$(PREFIX)/share/icons/hicolor" 2>/dev/null || true
 	-update-desktop-database "$(APPDIR)" 2>/dev/null || true
 	@echo "Removed the remoku command and desktop entry."
 

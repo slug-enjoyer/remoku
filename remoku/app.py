@@ -890,7 +890,13 @@ class RemoteWindow(Gtk.Window):
 
 
 def run(initial_ip: str | None = None) -> int:
+    # Give the process a proper identity so GNOME can match the window to the
+    # remoku.desktop entry (otherwise it shows up as "main.py" with a generic
+    # Python icon in the dock).
+    GLib.set_prgname("remoku")
+    GLib.set_application_name("Remoku")
     window = RemoteWindow(initial_ip)
+    window.set_wmclass("remoku", "Remoku")
     window.show_all()
     window.volume_row.set_visible(True)
     window.start(initial_ip)
