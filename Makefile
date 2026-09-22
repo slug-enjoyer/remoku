@@ -5,7 +5,7 @@ BINDIR = $(PREFIX)/bin
 APPDIR = $(PREFIX)/share/applications
 ICONDIR = $(PREFIX)/share/icons/hicolor/scalable/apps
 
-.PHONY: run list apps key install uninstall clean
+.PHONY: run list apps key install uninstall hooks audit clean
 
 # Start the graphical remote.
 run:
@@ -48,3 +48,13 @@ uninstall:
 
 clean:
 	find . -type d -name __pycache__ -prune -exec rm -rf {} +
+
+# Enable the secret-scanning pre-commit hook for this clone.
+hooks:
+	chmod +x scripts/hooks/pre-commit
+	git config core.hooksPath "$(CURDIR)/scripts/hooks"
+	@echo "pre-commit hook enabled (core.hooksPath -> scripts/hooks)"
+
+# Scan the whole repo (history + working tree) for secrets and local data.
+audit:
+	scripts/hooks/pre-commit audit

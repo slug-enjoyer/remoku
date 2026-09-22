@@ -1,2 +1,18 @@
 __pycache__/
 *.pyc
+
+# Local/device data must never be committed: it contains LAN addresses,
+# device names, serial numbers and MAC addresses.
+devices.json
+devices.local.json
+probe-*.json
+*.local.json
+
+# Credentials and keys
+.env
+.env.*
+*.pem
+*.key
+
+# Local scratch
+*.log

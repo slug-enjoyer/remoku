@@ -40,7 +40,7 @@ sudo pacman -S python-gobject gtk3 python-requests
 ```bash
 make run                 # start the GUI
 ./bin/remoku             # same thing
-./bin/remoku --ip 192.168.1.50
+./bin/remoku --ip 192.0.2.50
 make list                # print Roku devices found on the network
 make apps                # print apps/inputs of the last used device
 make key KEY=Home        # send a single keypress
@@ -63,6 +63,22 @@ This adds:
 
 The last used device is remembered in `~/.config/remoku/devices.json`;
 app icons are cached in `~/.cache/remoku/icons/`.
+
+## Secret scanning
+
+A pre-commit hook blocks commits that contain secrets and warns (without
+blocking) when staged lines look like local/private values such as LAN
+addresses, MAC addresses or home directory paths.
+
+```bash
+make hooks     # enable the hook for this clone (per-clone git config)
+make audit     # scan the whole repo, history included, any time
+```
+
+It runs [gitleaks](https://github.com/gitleaks/gitleaks) when installed
+(`sudo pacman -S gitleaks`) and falls back to a small built-in check otherwise.
+A deliberate example can be marked on its line with the comment
+`sensitive-example`; `git commit --no-verify` bypasses the hook entirely.
 
 ## Keyboard shortcuts
 

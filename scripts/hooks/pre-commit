@@ -1,0 +1,86 @@
+#!/bin/sh
+# remoku secret guard.
+#
+# Usage:
+#   scripts/hooks/pre-commit          # pre-commit: scan staged changes
+#   scripts/hooks/pre-commit audit    # scan the whole repo (history + working tree)
+#
+# Blocks commits that contain secrets. Uses gitleaks when installed (much
+# better rules than anything hand-written) and falls back to a small pattern
+# check otherwise. Also warns, without blocking, about local/private values
+# such as LAN addresses, MAC addresses and home directory paths.
+#
+# Enable once per clone:   make hooks
+# Scan on demand:          make audit
+#
+# A line that is a deliberate example can be silenced by adding the comment
+# "sensitive-example" to it. Deliberate bypass: git commit --no-verify
+
+set -u
+
+mode=${1:-staged}
+
+repo=$(git rev-parse --show-toplevel 2>/dev/null) || exit 0
+cd "$repo" || exit 0
+
+# High-confidence secrets, used only when gitleaks is not installed.
+# sensitive-example: the line below defines the patterns, it is not a secret.
+secret_re='(-----BEGIN [A-Z ]*PRIVATE KEY-----|ghp_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}|AKIA[0-9A-Z]{16}|sk-[A-Za-z0-9]{20,}|xox[baprs]-[A-Za-z0-9-]{10,}|(password|passwd|secret|api[_-]?key|access[_-]?token)[[:space:]]*[:=][[:space:]]*[^[:space:]]{6,})'
+
+# Local/private values; these only produce a warning.
+# sensitive-example: pattern definitions, not data.
+local_re='([0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}|(^|[^0-9])(10|192\.168|172\.(1[6-9]|2[0-9]|3[01]))\.[0-9]{1,3}\.[0-9]{1,3}|/home/[a-z]|/Users/[A-Za-z]'
+
+drop_known_examples() {
+    grep -v 'sensitive-example' | grep -vi '00:00:00:00:00:00'
+}
+
+status=0
+
+if [ "$mode" = "audit" ]; then
+    if command -v gitleaks >/dev/null 2>&1; then
+        echo "gitleaks: scanning commit history..."
+        gitleaks git --redact --no-banner . || status=1
+        echo "gitleaks: scanning the working tree..."
+        gitleaks dir --redact --no-banner . || status=1
+    else
+        echo "gitleaks is not installed; scanning the working tree with built-in patterns..."
+        hits=$(git grep -n -I -E "$secret_re" -- . 2>/dev/null | drop_known_examples || true)
+        if [ -n "$hits" ]; then
+            echo "$hits"
+            status=1
+        else
+            echo "no high-confidence secrets found"
+        fi
+    fi
+    [ "$status" -eq 0 ] && echo "audit clean"
+    exit "$status"
+fi
+
+# -- pre-commit: staged content only --------------------------------------
+
+if command -v gitleaks >/dev/null 2>&1; then
+    if ! gitleaks git --staged --redact --no-banner; then
+        echo >&2
+        echo "pre-commit: gitleaks found a secret in the staged changes." >&2
+        echo "pre-commit: remove it (and rotate the credential), then commit again." >&2
+        status=1
+    fi
+else
+    hits=$(git grep --cached -n -I -E "$secret_re" -- . 2>/dev/null | drop_known_examples || true)
+    if [ -n "$hits" ]; then
+        echo "pre-commit: refusing to commit what looks like a secret:" >&2
+        echo "$hits" >&2
+        echo "pre-commit: remove it (and rotate the credential), then commit again." >&2
+        status=1
+    fi
+fi
+
+warn=$(git grep --cached -n -I -E "$local_re" -- . 2>/dev/null | drop_known_examples || true)
+if [ -n "$warn" ]; then
+    echo "pre-commit: heads-up - staged lines that look like local/private values:" >&2
+    echo "$warn" >&2
+    echo "pre-commit: not blocking; mark deliberate examples with 'sensitive-example'." >&2
+fi
+
+exit "$status"
