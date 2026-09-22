@@ -311,9 +311,26 @@ class RemoteWindow(Gtk.Window):
         # runs before its built-in handler, so the arrow keys always behave
         # like the D-pad on the remote instead.
         self._install_key_handlers(self)
+        self._install_click_handlers(self)
         titlebar = self.get_titlebar()
         if titlebar is not None:
             self._install_key_handlers(titlebar)
+            self._install_click_handlers(titlebar)
+
+    def _forget_focus_on_click(self, button: Gtk.Button) -> None:
+        """Drop the focus ring once a click is finished.
+
+        Keyboard focus (Tab) still shows a ring, so the window stays usable
+        without a mouse.
+        """
+        button.connect("clicked", lambda _button: GLib.idle_add(self.set_focus, None))
+
+    def _install_click_handlers(self, widget: Gtk.Widget) -> None:
+        if isinstance(widget, Gtk.Button):
+            self._forget_focus_on_click(widget)
+        if isinstance(widget, Gtk.Container):
+            for child in widget.get_children():
+                self._install_click_handlers(child)
 
     def _install_key_handlers(self, widget: Gtk.Widget) -> None:
         if not isinstance(widget, Gtk.Entry):
@@ -601,6 +618,7 @@ class RemoteWindow(Gtk.Window):
         for app in streaming:
             self.apps_flow.add(self._app_tile(app))
         self.apps_flow.show_all()
+        self._install_click_handlers(self.apps_flow)
 
         for child in self.inputs_flow.get_children():
             self.inputs_flow.remove(child)
@@ -611,6 +629,7 @@ class RemoteWindow(Gtk.Window):
             button.connect("clicked", lambda _button, a=app: self.launch_app(a))
             self.inputs_flow.add(button)
         self.inputs_flow.show_all()
+        self._install_click_handlers(self.inputs_flow)
 
         has_inputs = bool(inputs)
         self.inputs_label.set_visible(has_inputs)
