@@ -6,6 +6,28 @@ public [External Control Protocol (ECP)](https://developer.roku.com/docs/develop
 Every Roku runs a tiny REST server on TCP port 8060. This app talks to it
 directly — no accounts, no cloud, no companion service.
 
+## Install
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/slug-enjoyer/remoku/main/install.sh | sh
+```
+
+Needs no root: the app is unpacked under `~/.local/share/remoku`, a `remoku`
+command lands in `~/.local/bin`, and a desktop entry plus icon are installed.
+The installer checks the dependencies first and prints the right command for
+your distro if anything is missing.
+
+```bash
+# install somewhere else
+curl -fsSL https://raw.githubusercontent.com/slug-enjoyer/remoku/main/install.sh | sh -s -- --prefix /opt/remoku
+
+# install a specific branch or tag
+curl -fsSL https://raw.githubusercontent.com/slug-enjoyer/remoku/main/install.sh | sh -s -- --ref v1.0.0
+
+# uninstall (settings and icon cache are kept)
+curl -fsSL https://raw.githubusercontent.com/slug-enjoyer/remoku/main/install.sh | sh -s -- --uninstall
+```
+
 ## Features
 
 - Purple Roku-style remote: power, back, home, info, instant replay, D-pad
@@ -27,9 +49,11 @@ directly — no accounts, no cloud, no companion service.
 ## Requirements
 
 - Python 3.10+
-- `python-gobject` (GTK3) and `python-requests`
+- GTK 3 and PyGObject
+- the Python `requests` module
 
-On Arch/CachyOS:
+The installer prints the right package names for your distro if any of these
+are missing. On Arch/CachyOS:
 
 ```bash
 sudo pacman -S python-gobject gtk3 python-requests
@@ -38,31 +62,33 @@ sudo pacman -S python-gobject gtk3 python-requests
 ## Usage
 
 ```bash
-make run                 # start the GUI
-./bin/remoku             # same thing
-./bin/remoku --ip 192.0.2.50
-make list                # print Roku devices found on the network
-make apps                # print apps/inputs of the last used device
-make key KEY=Home        # send a single keypress
+remoku                   # start the GUI
+remoku --ip 192.0.2.50
+remoku --list            # print Roku devices found on the network
+remoku --apps            # print apps/inputs of the last used device
+remoku --key Home        # send a single keypress
 ```
-
-## Install a launcher
-
-```bash
-make install
-```
-
-This adds:
-
-- a `remoku` command in `~/.local/bin` (with a `rokuremote` alias), so you can
-  start it from any terminal (and from GNOME's "Run a Command" dialog, Alt+F2)
-- a **Remoku** entry in your app grid, searchable as "remoku" or "rokuremote"
-  (the desktop entry carries the keywords `remoku;rokuremote;roku;remote;tv;`)
-
-`make uninstall` removes both.
 
 The last used device is remembered in `~/.config/remoku/devices.json`;
 app icons are cached in `~/.cache/remoku/icons/`.
+
+## Development
+
+```bash
+git clone https://github.com/slug-enjoyer/remoku
+cd remoku
+
+make run                 # run straight from the source tree
+make install             # symlink the commands into ~/.local (dev install)
+make uninstall           # remove those symlinks
+
+make list                # devices on the network
+make apps                # apps/inputs of the last used device
+make key KEY=Home        # send a single keypress
+
+make hooks               # enable the secret-scanning pre-commit hook
+make audit               # scan history + working tree for secrets
+```
 
 ## Secret scanning
 
