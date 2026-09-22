@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Remoku
+GenericName=Roku Remote
+Comment=Control Roku devices over your local network
+Exec=@EXEC@
+Icon=remoku
+Terminal=false
+Categories=AudioVideo;
+Keywords=remoku;rokuremote;roku;remote;remote control;tv;
+StartupNotify=true
