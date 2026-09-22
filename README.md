@@ -132,3 +132,7 @@ to Alt combinations.
   attempt finishes.
 - Power/volume buttons only appear for devices that report support for them
   (Roku TVs, or players using TV controls over HDMI-CEC).
+
+## License
+
+GPL-3.0. See [LICENSE](LICENSE).
